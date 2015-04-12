@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Visualization Wheel of Cairo </title>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+
+
+    <script type="text/javascript">
+        var width = 600;
+        var height = 600;
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        var center_x = (width / 2);
+        var center_y = (height / 2);
+        var r = (width / 2 - 100);
+
+
+
+        // For short.
+        var pi = Math.PI;
+
+        // Calculate line start and end coordinates.
+        var line_x1 = function (d) {
+            return center_x - Math.sin(d) * (r);
+        };
+        var line_x2 = function (d) {
+            return center_x + Math.sin(d) * (r);
+        };
+        var line_y1 = function (d) {
+            return center_y - Math.cos(d) * (r);
+        };
+        var line_y2 = function (d) {
+            return center_y + Math.cos(d) * (r);
+        };
+
+        var angle = [];
+
+        // Update the drawing with new parameters.
+        var generate = function () {
+            // Refill the data.
+            data = [];
+            for (i = 0; i < 12; i++) {
+                angle.push((pi / 6) * i + pi / 12);
+            }
+
+            // Draw the lines
+            var lines = svg.selectAll('line').data(angle);
+            var line_draw = function (l) {
+                l.attr('x1', line_x1)
+                    .attr('y1', line_y1)
+                    .attr('x2', line_x2)
+                    .attr('y2', line_y2)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "black");
+            };
+
+            lines.enter()
+                .append('line')
+                .call(line_draw);
+
+            //Draw the dots
+
+            var circles = svg.selectAll("circle")
+                .data(angle)
+                .enter()
+                .append("circle")
+                .attr("cx", function (d) {
+                    return center_x - Math.sin(d) * (r);
+                })
+                .attr("cy", function (d) {
+                    return center_y - Math.cos(d) * (r);
+                })
+                .attr("r", 5)
+                .attr("fill", "black");
+
+            //Append the text
+            d3.json("wheel.json", function (data) {
+                var text = svg.append("svg:g")
+                    .selectAll("text")
+                    .data(data)
+                    .enter()
+                    .append("text")
+                    .attr("fill", "gray")
+                    .attr("x", function (d) {
+                        return d[1];
+                    })
+                    .attr("y", function (d) {
+                        return d[2];
+                    })
+                    .text(function (d) {
+                        return d[0];
+                    });
+
+            });
+
+            //Draw the horizontal aixs
+            var axis = svg.append("line")
+                .attr("x1", 50)
+                .attr("y1", 300)
+                .attr("x2", 550)
+                .attr("y2", 300)
+                .attr("stroke-width", 2)
+                .style("stroke-dasharray", ("3,3"))
+                .attr("stroke", "black");
+
+            //Draw the arc
+
+            var markerdata = [
+                {
+                    id: 0,
+                    name: 'arrow0',
+                    path: 'M 0,0 L -20,10 L -10,0 L -20,-10 Z',
+                    viewbox: '-20 -10 20 20'
+                }
+  , {
+                    id: 1,
+                    name: 'arrow1',
+                    path: 'M 0,0 L 20,10 L 10,0 L 20,-10 Z',
+                    viewbox: '0 -10 20 20'
+                }
+  ]
+
+            var defs = svg.append('svg:defs');
+
+            var marker = defs.selectAll('marker')
+                .data(markerdata)
+                .enter()
+                .append('svg:marker')
+                .attr('id', function (d) {
+                    return 'marker_' + d.name
+                })
+                .attr('markerHeight', 10)
+                .attr('markerWidth', 10)
+                .attr('markerUnits', 'strokeWidth')
+                .attr('orient', 'auto')
+                .attr('refX', 0)
+                .attr('refY', 0)
+                .attr('viewBox', function (d) {
+                    return d.viewbox
+                })
+                .append('svg:path')
+                .attr('d', function (d) {
+                    return d.path
+                })
+                .attr('fill', 'black');
+
+            var arc1 = svg.append("path")
+                .attr("d", "M 21,320 A 280,280 0 0,0 579,320")
+                .attr("stroke-width", 2)
+                .attr("stroke", "black")
+                .attr("fill", "none")
+                .attr("stroke-linecap", "round")
+                .attr('marker-start', 'url(#marker_arrow1)')
+                .attr('marker-end', 'url(#marker_arrow0)');
+
+            var text1 = svg.append("text")
+                .attr("x", 220)
+                .attr("y", 60)
+                .attr("font-size", 15)
+                .attr("fill", "black")
+                .attr("font-family", "sans-serif")
+                .text("More complex and deeper");
+
+            var arc2 = svg.append("path")
+                .attr("d", "M 21,280 A 280,280 0 0,1 579,280")
+                .attr("stroke-width", 2)
+                .attr("stroke", "black")
+                .attr("fill", "none")
+                .attr("stroke-linecap", "round")
+                .attr('marker-start', 'url(#marker_arrow1)')
+                .attr('marker-end', 'url(#marker_arrow0)');
+
+            var text2 = svg.append("text")
+                .attr("x", 200)
+                .attr("y", 550)
+                .attr("font-size", 15)
+                .attr("fill", "black")
+                .attr("font-family", "sans-serif")
+                .text("More intelligible and shallower");
+
+        };
+
+
+
+        generate();
+
+        //join data of specific visualization value
+        d3.json("polygon.json", function (data) {
+            data.push(data[0]);
+            var polyFunction = d3.svg.line()
+                .x(function (d, i) {
+                    return center_x - Math.sin((pi / 6) * i + pi / 12) * (d * r);
+                })
+                .y(function (d, i) {
+                    return center_x - Math.cos((pi / 6) * i + pi / 12) * (d * r);
+                })
+                .interpolate("linear");
+
+            var polygon = svg.append('svg:g')
+                .append("path")
+                .attr("d", polyFunction(data))
+                .attr("stroke", "black")
+                .attr("stroke-width", 1.5)
+                .attr("fill", "orange")
+                .attr("opacity", "0.5");
+        });
+    </script>
+
+</body>
+
+</html>
